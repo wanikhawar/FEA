@@ -3,11 +3,10 @@
 def status(string):
     print("-" * 30)
     print(string)
-    print("-" * 30)
 
 
-inp = open('NLPFEH_GD025_T60-fluid_domain.inp', 'r')
-vtk = open('NLPFEH_GD025_T60-fluid_domain.vtk', 'w')
+inp = open('NLPFEH_LD_NBC_01MS_T60-fluid_domain.inp', 'r')
+vtk = open('NLPFEH_LD_NBC_01MS_T60-fluid_domain.vtk', 'w')
 
 vtk.write("# vtk DataFile Version 3.0\n")
 vtk.write("Mesh Data Information\n")
@@ -79,15 +78,15 @@ vtk.write("CELL_TYPES {}\n".format(num_elem))
 for i in range(len(elements)):
     vtk.write("12\n")
 
-status("READING POD MODAL DATA")
+status("READING VELOCITY POD MODAL DATA")
 
-vel_pod_data = open('file2write.txt', 'r')
+vel_pod_data = open('v_pod_modes.txt', 'r')
 vel_pod_raw = vel_pod_data.readlines()
 vel_pod_loc = []
 for vel_pod_row in vel_pod_raw:
     vel_pod_loc.append(vel_pod_row.replace(' ', '').replace('\n', '').split(','))
 
-status("WRITING POD MODAL DATA TO VTK")
+status("WRITING VELOCITY POD MODAL DATA TO VTK")
 vtk.write('\nPOINT_DATA {}\n'.format(num_nodes))
 
 for mode in range(10):
@@ -102,15 +101,15 @@ for mode in range(10):
 
 vel_pod_data.close()
 
-status("READING DMD MODAL DATA")
+status("READING VELOCITY DMD MODAL DATA")
 
-vel_dmd_data = open('dmd_modes.txt', 'r')
+vel_dmd_data = open('v_dmd_modes.txt', 'r')
 vel_dmd_raw = vel_dmd_data.readlines()
 vel_dmd_loc = []
 for vel_dmd_row in vel_dmd_raw:
     vel_dmd_loc.append(vel_dmd_row.replace(' ', '').replace('\n', '').split(','))
 
-status("WRITING DMD MODAL DATA TO VTK")
+status("WRITING VELOCITY DMD MODAL DATA TO VTK")
 
 for mode in range(20):
     # since dmd modes are in pairs because of complex conjugate nature, we only take one of the two
@@ -125,6 +124,52 @@ for mode in range(20):
             vtk.write(node[mode] + '\n')
 
 vel_dmd_data.close()
+
+status("READING PRESSURE POD MODAL DATA")
+
+p_pod_data = open('p_pod_modes.txt', 'r')
+p_pod_raw = p_pod_data.readlines()
+p_pod_loc = []
+for p_pod_row in p_pod_raw:
+    p_pod_loc.append(p_pod_row.replace(' ', '').replace('\n', '').split(','))
+
+status("WRITING PRESSURE POD MODAL DATA TO VTK")
+
+for mode in range(10):
+    if mode + 1 < 10:
+        vtk.write('\nSCALARS p_POD_mode_0{} float 1\n'.format(mode + 1))
+    else:
+        vtk.write('\nSCALARS p_POD_mode_{} float 1\n'.format(mode + 1))
+
+    vtk.write('LOOKUP_TABLE default\n')
+    for node in p_pod_loc:
+        vtk.write(node[mode] + '\n')
+
+p_pod_data.close()
+
+status("READING PRESSURE DMD MODAL DATA")
+
+p_dmd_data = open('p_dmd_modes.txt', 'r')
+p_dmd_raw = p_dmd_data.readlines()
+p_dmd_loc = []
+for p_dmd_row in p_dmd_raw:
+    p_dmd_loc.append(p_dmd_row.replace(' ', '').replace('\n', '').split(','))
+
+status("WRITING PRESSURE DMD MODAL DATA TO VTK")
+
+for mode in range(20):
+    # since dmd modes are in pairs because of complex conjugate nature, we only take one of the two
+    if mode % 2 == 0:
+        if (((mode + 1) + 1)/2) < 10:
+            vtk.write('\nSCALARS p_DMD_mode_0{} float 1\n'.format(int(((mode + 1) + 1) / 2)))
+        else:
+            vtk.write('\nSCALARS p_DMD_mode_{} float 1\n'.format(int(((mode + 1) + 1) / 2)))
+
+        vtk.write('LOOKUP_TABLE default\n')
+        for node in p_dmd_loc:
+            vtk.write(node[mode] + '\n')
+
+p_dmd_data.close()
 
 vtk.close()
 inp.close()
